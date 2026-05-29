@@ -125,9 +125,35 @@ BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	return FALSE;
 }
+LPSTR ByteToBinaryString(BYTE byte, LPSTR szBuffer)
+{
+	for (int i = 7; i >= 0; --i)
+		*szBuffer++ = (byte & (1 << i)) ? '1' : '0';
+	*szBuffer = '\0';
+	return szBuffer - 8;
+}
 LPSTR FormatAddress(CHAR szBuffer[], CONST CHAR szMessage[], DWORD dwIPaddress)
 {
+	BYTE first = FIRST_IPADDRESS(dwIPaddress);
+	BYTE second = SECOND_IPADDRESS(dwIPaddress);
+	BYTE third = THIRD_IPADDRESS(dwIPaddress);
+	BYTE fourth = FOURTH_IPADDRESS(dwIPaddress);
+
+	CHAR binary[4][9];
+	ByteToBinaryString(first, binary[0]);
+	ByteToBinaryString(second, binary[1]);
+	ByteToBinaryString(third, binary[2]);
+	ByteToBinaryString(fourth, binary[3]);
+
 	sprintf
+	(
+		szBuffer,
+		"%s%d.%d.%d.%d (%s.%s.%s.%s)",
+		szMessage,
+		first, second, third, fourth,
+		binary[0], binary[1], binary[2], binary[3]
+	);
+	/*sprintf
 	(
 		szBuffer,
 		"%s%i.%i.%i.%i",
@@ -136,7 +162,7 @@ LPSTR FormatAddress(CHAR szBuffer[], CONST CHAR szMessage[], DWORD dwIPaddress)
 		SECOND_IPADDRESS(dwIPaddress),
 		THIRD_IPADDRESS(dwIPaddress),
 		FOURTH_IPADDRESS(dwIPaddress)
-	);
+	);*/
 	return szBuffer;
 }
 LPSTR FormatCount(CHAR szBuffer[], CONST CHAR szMessage[], DWORD dwCount)
@@ -157,6 +183,8 @@ VOID PrintInfo(HWND hwnd)
 	DWORD dwBroadcastAddress = dwIPaddress | ~dwIPmask;
 
 	CHAR szInfo[1024] = {};
+	CHAR szIPAddress[1024] = {};
+	CHAR szIPMask[1024] = {};
 	CHAR szNetworkAddress[1024] = {};
 	CHAR szBroadcastAddress[1024] = {};
 	CHAR szIPcount[1024] = {};
@@ -164,7 +192,9 @@ VOID PrintInfo(HWND hwnd)
 	sprintf
 	(
 		szInfo,
-		"%s;\n%s;\n%s;\n%s;\n",
+		"%s;\n%s;\n%s;\n%s;\n%s;\n%s",
+		FormatAddress(szIPAddress, "IP-адрес: \t\t\t", dwIPaddress),
+		FormatAddress(szIPMask, "Маска подсети: \t\t", dwIPmask),
 		FormatAddress(szNetworkAddress, "Адрес сети: \t\t\t", dwNetworkAddress),
 		FormatAddress(szBroadcastAddress, "Широковещательный адрес: \t", dwBroadcastAddress),
 		FormatCount(szIPcount, "Количество IP-адресов:\t", dwBroadcastAddress - dwNetworkAddress + 1),
